@@ -1,0 +1,41 @@
+// Two-channel inverting preamp: gain = -rf/rin, biased at mid-supply.
+import parts.*;
+
+// One amplifier channel: the gain-setting resistors around an op-amp half.
+subdesign gain_stage {
+    port in;       // signal input
+    port in_n;     // op-amp inverting input
+    port out;      // op-amp output
+
+    inst rin of R_0603 { VALUE = "10k";  a = in;   b = in_n; }
+    inst rf  of R_0603 { VALUE = "100k"; a = in_n; b = out;  }
+}
+
+design preamp {
+    info { "Two-channel inverting preamp, gain -10 (channel 2: -4.7)." }
+
+    net vcc, gnd, vref;
+    net[1:2] in, out, in_n;
+
+    inst u1 of LM358 {
+        out = out; in_n = in_n; in_p = <vref>;
+        vcc = vcc; gnd = gnd;
+    }
+
+    // Mid-supply reference: a 10k/10k divider, filtered.
+    inst(1:2) rdiv of R_0603 { VALUE = "10k"; combine(a) = {vcc, gnd}; b = <vref>; }
+    inst cref of C_0603 { VALUE = "1u";   a = vref; b = gnd; }
+    inst cdec of C_0603 { VALUE = "100n"; a = vcc;  b = gnd; }
+
+    inst j_pwr of HDR_1x03 { p = {vcc, gnd, vref}; }
+    inst j_in  of HDR_1x03 { p = {in[1], in[2], gnd}; }
+    inst j_out of HDR_1x03 { p = {out[1], out[2], gnd}; }
+
+    // Channel 1 is ch(1), channel 2 is ch(2); combine() spreads the vectors across them.
+    subinst(1:2) ch of gain_stage "CH" {
+        combine(in) = in;
+        combine(in_n) = in_n;
+        combine(out) = out;
+        this(2).rf.VALUE = "47k";
+    }
+}

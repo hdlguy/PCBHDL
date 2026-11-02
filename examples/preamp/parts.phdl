@@ -1,0 +1,41 @@
+// Parts for the preamp example. Footprints are from the standard KiCad libraries.
+package parts {
+
+    // Dual op-amp. The vector pins put channel 1 on bit 1 and channel 2 on bit 2.
+    device LM358 {
+        attr REFPREFIX = "U";
+        attr LIBRARY   = "Package_SO";
+        attr FOOTPRINT = "SOIC-8_3.9x4.9mm_P1.27mm";
+        attr VALUE     = "LM358";
+        outpin[1:2] out  = {1, 7};
+        inpin[1:2]  in_n = {2, 6};
+        inpin[1:2]  in_p = {3, 5};
+        pwrpin      vcc  = {8};
+        pwrpin      gnd  = {4};
+    }
+
+    device R_0603 {
+        attr REFPREFIX = "R";
+        attr LIBRARY   = "Resistor_SMD";
+        attr FOOTPRINT = "R_0603_1608Metric";
+        attr VALUE     = "";
+        passpin a = {1};
+        passpin b = {2};
+    }
+
+    device C_0603 {
+        attr REFPREFIX = "C";
+        attr LIBRARY   = "Capacitor_SMD";
+        attr FOOTPRINT = "C_0603_1608Metric";
+        attr VALUE     = "";
+        passpin a = {1};
+        passpin b = {2};
+    }
+
+    device HDR_1x03 {
+        attr REFPREFIX = "J";
+        attr LIBRARY   = "Connector_PinHeader_2.54mm";
+        attr FOOTPRINT = "PinHeader_1x03_P2.54mm_Vertical";
+        passpin[1:3] p = {1, 2, 3};
+    }
+}

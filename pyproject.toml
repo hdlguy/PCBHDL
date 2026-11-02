@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcbhdl"
+version = "0.1.0"
+description = "A PHDL-compatible hardware description language compiler for printed circuit boards"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["antlr4-python3-runtime==4.13.2"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+pcbhdl = "pcbhdl.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["pcbhdl*"]
+
+[tool.setuptools.package-data]
+pcbhdl = ["grammar/*.g4"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
