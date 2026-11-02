@@ -21,6 +21,7 @@ the bug.
 |---|---|
 | `attr X = "..."` inside an `inst` was accepted and then ignored. | The attribute is added to the instance and appears in the BOM. This restores the behaviour of the earlier PHDL build that produced the original example outputs. |
 | `info { ... }` inside an `inst` was ignored. | It is written to the `.lsi` file after the device's info. |
+| `info` on a scalar net (as opposed to a vector net) and `info` in a subdesign were ignored. | They are written to the `.lsi` file. |
 | Two top-level nets joined only inside a subdesign (for example by `p = q;` between two ports) stayed two separate nets in the netlist. | They are merged into one net, named after the first-declared top-level net. `Options(merge_through_ports=False)` restores the old behaviour. |
 | A path attribute (`a.b.ATTR = "v";`) reaching more than one sub-instance crashed. | It applies to every instance the path selects. |
 | A path attribute changed the BOM but not the netlist footprint, library or refdes. | The final attribute values are used everywhere. |

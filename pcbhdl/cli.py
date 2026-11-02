@@ -22,7 +22,7 @@ from .elaborate import Options
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="pcbhdl", description="Compile PHDL designs to PCB netlists.")
     ap.add_argument("files", nargs="+", type=Path, help="PHDL source files (.phdl); directories are searched recursively")
-    ap.add_argument("-t", "--top", help="name of the top-level design (default: the only 'design' found)")
+    ap.add_argument("-t", "--top", help="compile only the top-level design with this name (default: every design)")
     ap.add_argument("-f", "--format", action="append", default=[], choices=sorted(BACKENDS),
                     help="output format; may be repeated (default: none, check only)")
     ap.add_argument("-o", "--output-dir", type=Path, default=Path("."), help="directory for output files")
