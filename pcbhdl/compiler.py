@@ -50,10 +50,11 @@ def compile_files(files: list[str | Path], reporter: Reporter, top: str | None =
     if reporter.error_count:
         return None
 
+    options = options or Options()
     netlists = []
     for unit in units:
         nets = form_nets(unit)
-        assign_refdes(unit, reporter)
+        assign_refdes(unit, reporter, options.refdes_style)
         if run_erc:
             erc(nets, reporter)
         netlists.append(to_netlist(unit, nets, paths))

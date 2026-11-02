@@ -44,7 +44,11 @@ committed.
 pcbhdl examples/preamp                              # check only
 pcbhdl -f kicad -f bom -o out examples/preamp       # out/preamp.net, out/preamp.bom
 pcbhdl --diagnostics json board/*.phdl              # machine-readable errors
+pcbhdl --refdes phdl -f kicad old_phdl_board/       # keep PHDL 2.1 designators (CH1/R2)
 ```
+
+Reference designators are flat by default (R1, R2, ... across the whole
+board).
 
 In the KiCad PCB editor, load the result with **File > Import > Netlist**.
 Footprints are named `LIBRARY:FOOTPRINT` from the device attributes (or

@@ -13,6 +13,7 @@ import pytest
 from pcbhdl.backends import BACKENDS
 from pcbhdl.compiler import compile_files
 from pcbhdl.diagnostics import Reporter
+from pcbhdl.elaborate import Options
 from pcbhdl.frontend import parse_file
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -37,7 +38,7 @@ def norm(text: str) -> str:
 
 def compile_ok(files) -> list:
     r = Reporter()
-    netlists = compile_files(files, r)
+    netlists = compile_files(files, r, options=Options(refdes_style="phdl"))
     assert netlists is not None, r.render_text()
     return netlists
 

@@ -32,6 +32,7 @@ design preamp {
     inst j_out of HDR_1x03 { p = {out[1], out[2], gnd}; }
 
     // Channel 1 is ch(1), channel 2 is ch(2); combine() spreads the vectors across them.
+    // ("CH" is a refdes prefix, used only with --refdes phdl.)
     subinst(1:2) ch of gain_stage "CH" {
         combine(in) = in;
         combine(in_n) = in_n;

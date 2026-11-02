@@ -355,6 +355,9 @@ class Options:
     # a sub-design (for example by 'p = q;' between two ports). True fixes
     # that; False reproduces PHDL 2.1 exactly.
     merge_through_ports: bool = True
+    # Reference designator style: "flat" (R1, R2, ... across the whole board)
+    # or "phdl" (PHDL 2.1 hierarchical designators such as "CH1/R2").
+    refdes_style: str = "flat"
 
 
 class Elaborator:

@@ -16,6 +16,7 @@ from . import __version__
 from .backends import BACKENDS
 from .compiler import compile_files
 from .diagnostics import Reporter
+from .elaborate import Options
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -25,6 +26,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("-f", "--format", action="append", default=[], choices=sorted(BACKENDS),
                     help="output format; may be repeated (default: none, check only)")
     ap.add_argument("-o", "--output-dir", type=Path, default=Path("."), help="directory for output files")
+    ap.add_argument("--refdes", choices=["flat", "phdl"], default="flat",
+                    help="reference designator style: flat (R1, R2, ...; default) or phdl "
+                         "(PHDL 2.1 hierarchical, e.g. CH1/R2, for existing PHDL boards)")
     ap.add_argument("--diagnostics", choices=["text", "json"], default="text",
                     help="format for errors and warnings (json is intended for tools and AI agents)")
     ap.add_argument("--color", choices=["auto", "always", "never"], default="auto")
@@ -37,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
         files.extend(sorted(f.rglob("*.phdl")) if f.is_dir() else [f])
 
     reporter = Reporter()
-    netlists = compile_files(files, reporter, top=args.top)
+    netlists = compile_files(files, reporter, top=args.top, options=Options(refdes_style=args.refdes))
 
     if args.no_warnings:
         reporter.diagnostics = [d for d in reporter.diagnostics if d.severity.value == "error"]

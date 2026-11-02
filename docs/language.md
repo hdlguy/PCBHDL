@@ -146,15 +146,16 @@ When nets are joined, the one declared first gives the net its name.
 ## Sub-design instances
 
 ```
-subinst(1:2) ch of gain_stage "CH" {   // "CH" prefixes refdes: CH1/R1, CH2/R1, ...
+subinst(1:2) ch of gain_stage "CH" {   // "CH": refdes prefix, used only with --refdes phdl
     combine(in) = in;                  // ports are assigned like pins
     out = <vout>;
     this(2).rf.VALUE = "47k";          // set an attribute deep inside (path to an inst)
 }
 ```
 
-* The optional string is the reference designator prefix for parts inside;
-  `attr REFPREFIX = "CH";` in the body does the same.
+* The optional string is a reference designator prefix for the parts
+  inside (`attr REFPREFIX = "CH";` in the body does the same). It is only
+  used with `--refdes phdl`.
 * Every port must be assigned (`open` is allowed).
 * A path like `amp(1).stage.rf.VALUE = "1k";` sets an attribute on the
   instance it names, through any number of levels; without indices it
@@ -162,10 +163,19 @@ subinst(1:2) ch of gain_stage "CH" {   // "CH" prefixes refdes: CH1/R1, CH2/R1, 
 
 ## Reference designators
 
-Parts with a fixed `REFDES` are reserved first. The rest are numbered
-`REFPREFIX` + the smallest free number. Parts inside sub-designs with a
-prefix are named `PREFIX[index]/REFPREFIXn`, e.g. `CH1/R2`. Numbering
-follows PHDL 2.1, so existing PHDL designs keep their reference designators.
+Parts with a fixed `REFDES` keep it. The rest are numbered `REFPREFIX` +
+the smallest free number, in one board-wide sequence per prefix: top-level
+parts first, then each sub-design instance in turn, so the parts of one
+channel get consecutive numbers (R1, R2, ... C1, C2, ...).
+
+A fixed `REFDES` inside a subdesign that is instanced more than once would
+repeat, which is an error; set it from the parent instead
+(`ch(1).rf.REFDES = "R10";`).
+
+`--refdes phdl` selects PHDL 2.1's hierarchical designators instead
+(`PREFIX[index]/REFPREFIXn`, e.g. `CH1/R2`, using the subinst prefix
+string), numbered exactly as PHDL 2.1 did, so existing PHDL boards keep
+their designators.
 
 ## Outputs
 

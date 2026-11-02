@@ -8,8 +8,8 @@ PHDL 2.1 test suite and example boards in
 * the 5 `GeneratorTest` designs reproduce all 30 golden files byte for byte;
 * the 5 example boards (atlys, fmc_module, ptzlanc, seven_segment,
   voice_modulator) produce the same PADS, EAGLE, XML netlist and refdes map
-  as the PHDL 2.1 compiler, so net names, pin order and reference
-  designators are unchanged;
+  as the PHDL 2.1 compiler (with `--refdes phdl`), so net names, pin order
+  and reference designators are unchanged;
 * the error test cases are flagged on the same lines as PHDL 2.1.
 
 ## Where PCBHDL deliberately differs
@@ -42,9 +42,12 @@ their outputs depend on them:
 * Pin order inside nets: statement order at the top level, instance then
   device-pin order inside sub-designs. Neighbouring sub-instance arrays at
   the top level sort by text (`s(10)` before `s(2)`).
-* Reference designator numbering, including prefix forms such as `A//R1`
-  for a prefixless sub-instance inside a prefixed one, and numbering of
-  parts inside sub-designs before top-level parts.
+* Reference designator numbering with `--refdes phdl`, including prefix
+  forms such as `A//R1` for a prefixless sub-instance inside a prefixed
+  one, and numbering of parts inside sub-designs before top-level parts.
+  The default (`--refdes flat`) numbers the board as one flat sequence
+  instead; use `--refdes phdl` to keep the designators of an existing
+  PHDL board.
 * The `phdl-xml` netlist identifies nets by bare name and keeps only the
   first net of each name, as PHDL 2.1 did. Use the `kicad` or `json`
   back ends for complete netlists.

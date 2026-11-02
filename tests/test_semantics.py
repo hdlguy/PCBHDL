@@ -114,7 +114,7 @@ design top {
     # Pushdown reaches every element of both arrays (PHDL 2.1 crashed here).
     assert sorted(p.attributes["VALUE"] for p in parts.values()) == ["1k", "4k7", "4k7", "4k7", "4k7"]
     assert parts["R1"].attributes["TOLERANCE"] == "1%"
-    assert "M1/L1/R1" in parts and "M2/L2/R1" in parts
+    assert sorted(parts) == ["R1", "R2", "R3", "R4", "R5"]
     bom = BACKENDS["bom"].generate(out[0])
     assert bom.splitlines()[0] == "QUANTITY, NAME, REFDES, LIBRARY, FOOTPRINT, TOLERANCE, VALUE"
 
@@ -134,6 +134,42 @@ def test_refdes_override_needs_declared_attribute(tmp_path):
     out, r = compile_src(tmp_path, """
 design top { net n; inst a of R { REFDES = "R7"; a = n; b = n; } }""")
     assert out is None and codes(r) == ["E0501"]
+
+
+REFDES_SRC = """
+device C { attr REFPREFIX = "C"; attr LIBRARY = "l"; attr FOOTPRINT = "f"; attr REFDES = ""; pin a = {1}; }
+subdesign stage { port p; inst r of R { a = p; b = p; } inst c of C { a = p; } }
+design top {
+    net n;
+    inst(1:2) c of C { this(1).REFDES = "C2"; a = n; }
+    subinst(1:2) ch of stage "CH" { p = n; }
+    inst r of R { a = n; b = n; }
+}"""
+
+
+def test_flat_refdes(tmp_path):
+    out, r = compile_src(tmp_path, REFDES_SRC)
+    assert out, r.render_text()
+    got = {p.path: p.refdes for p in out[0].parts}
+    # Top-level parts first, then each channel in turn; C2 is fixed, C1/C3/C4 fill around it.
+    assert got == {"top/c(1)": "C2", "top/c(2)": "C1", "top/r": "R1",
+                   "top/ch(1)/r": "R2", "top/ch(1)/c": "C3",
+                   "top/ch(2)/r": "R3", "top/ch(2)/c": "C4"}
+
+
+def test_phdl_refdes_style(tmp_path):
+    out, r = compile_src(tmp_path, REFDES_SRC, options=Options(refdes_style="phdl"))
+    got = {p.path: p.refdes for p in out[0].parts}
+    assert got["top/ch(2)/r"] == "CH2/R1" and got["top/r"] == "R1"
+
+
+def test_fixed_refdes_in_repeated_subdesign(tmp_path):
+    out, r = compile_src(tmp_path, """
+device C { attr REFPREFIX = "C"; attr LIBRARY = "l"; attr FOOTPRINT = "f"; attr REFDES = ""; pin a = {1}; }
+subdesign stage { port p; inst c of C { REFDES = "C9"; a = p; } }
+design top { net n; subinst(1:2) ch of stage { p = n; } }""")
+    assert out is None and codes(r) == ["E0601"]
+    assert "instanced more than once" in r.diagnostics[0].hint
 
 
 def test_erc_warns_but_does_not_fail(tmp_path):

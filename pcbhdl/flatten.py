@@ -91,52 +91,73 @@ def form_nets(top: Unit) -> list[FlatNet]:
 # Reference designators
 # ---------------------------------------------------------------------------
 
-def assign_refdes(top: Unit, reporter: Reporter) -> dict[str, InstElem]:
-    """Assign refdes to every instance element; returns refdes -> element."""
+def assign_refdes(top: Unit, reporter: Reporter, style: str = "flat") -> dict[str, InstElem]:
+    """Assign refdes to every instance element; returns refdes -> element.
+
+    style "flat": one board-wide sequence per REFPREFIX (R1, R2, ...),
+        numbered in hierarchy order (top-level parts, then each sub-design
+        instance in turn). Sub-design prefixes are not used.
+    style "phdl": PHDL 2.1 hierarchical designators such as "CH1/R2",
+        numbered exactly as PHDL 2.1 did.
+    In both styles, fixed REFDES values are reserved first and generated
+    numbers fill the gaps.
+    """
     taken: dict[str, InstElem] = {}
+    hierarchical = style == "phdl"
+
+    def reserve(e: InstElem, refdes: str) -> None:
+        e.refdes = refdes
+        if refdes in taken:
+            other = taken[refdes]
+            hint = None
+            if other.loc == e.loc:
+                hint = ("this REFDES is inside a subdesign that is instanced more than once; "
+                        "set it from the parent instead, e.g.  sub.inst.REFDES = \"...\";")
+            reporter.error("E0601", f"reference designator '{refdes}' is used by both "
+                                    f"'{other.path}' and '{e.path}'", e.loc,
+                           notes=[("other instance", other.loc)], hint=hint)
+        else:
+            taken[refdes] = e
+
+    def generate(e: InstElem, prefix: str) -> None:
+        k = 1
+        while f"{prefix}{k}" in taken:
+            k += 1
+        e.refdes = f"{prefix}{k}"
+        taken[e.refdes] = e
 
     # Pass 1, pre-order: sub-instance prefixes, then fixed REFDES values.
     def pass1(u: Unit) -> None:
-        if not u.is_top:
+        if not u.is_top and hierarchical:
             p = u.own_prefix
             if not u.parent.is_top:
                 p = u.parent.final_prefix + p
             if u.index is not None and p.strip():
                 p = p + str(u.index)
-            if p.strip():
-                u.final_prefix = p + "/"
-            else:
-                u.final_prefix = ""
+            u.final_prefix = p + "/" if p.strip() else ""
         for e in u.insts:
             fixed = e.attrs.get("REFDES", "")
             if fixed:
-                e.refdes = (u.final_prefix if not u.is_top else "") + fixed
-                if e.refdes in taken:
-                    other = taken[e.refdes]
-                    reporter.error("E0601", f"reference designator '{e.refdes}' is used by both "
-                                            f"'{other.path}' and '{e.path}'", e.loc,
-                                   notes=[("other instance", other.loc)])
-                else:
-                    taken[e.refdes] = e
+                reserve(e, (u.final_prefix if hierarchical and not u.is_top else "") + fixed)
         for s in u.subs:
             pass1(s)
 
-    # Pass 2, post-order: generate the rest, smallest free number first.
+    # Pass 2 (phdl), post-order: sub-designs are numbered before their parents.
     def pass2(u: Unit) -> None:
         for s in u.subs:
             pass2(s)
         for e in u.insts:
-            if e.refdes:
-                continue
-            prefix = (u.final_prefix if not u.is_top else "") + e.attrs.get("REFPREFIX", "")
-            k = 1
-            while f"{prefix}{k}" in taken:
-                k += 1
-            e.refdes = f"{prefix}{k}"
-            taken[e.refdes] = e
+            if not e.refdes:
+                generate(e, (u.final_prefix if not u.is_top else "") + e.attrs.get("REFPREFIX", ""))
 
     pass1(top)
-    pass2(top)
+    if hierarchical:
+        pass2(top)
+    else:
+        for u in top.walk():
+            for e in u.insts:
+                if not e.refdes:
+                    generate(e, e.attrs.get("REFPREFIX", ""))
     return taken
 
 
